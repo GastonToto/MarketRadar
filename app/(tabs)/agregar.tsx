@@ -1,32 +1,36 @@
-import { useRouter } from 'expo-router'; // <--- 2. IMPORTAMOS EL NAVEGADOR
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { actualizarInversiones } from '../global'; // <--- 1. IMPORTAMOS LA FUNCIÓN
+import { actualizarInversiones } from '../global';
 
 export default function ExploreScreen() {
   const [activo, setActivo] = useState('');
-  const [monto, setMonto] = useState('');
-  const [precio, setPrecio] = useState('');
-  const router = useRouter(); // <--- 3. CREAMOS EL CONTROLADOR DEL NAVEGADOR
+  const [monto, setMonto] = useState(''); // Representa la CANTIDAD de monedas (ej: 0.5)
+  const [precio, setPrecio] = useState(''); // Representa el PRECIO UNITARIO (ej: 50000)
+  const router = useRouter(); 
 
-const guardarInversion = () => {
-  if (!activo || !monto || !precio) {
-    Alert.alert("Error", "Por favor completa todos los campos");
-    return;
-  }
-  
-  const valorTotal = parseFloat(monto) * parseFloat(precio);
+  const guardarInversion = () => {
+    if (!activo || !monto || !precio) {
+      Alert.alert("Error", "Por favor completa todos los campos");
+      return;
+    }
+    
+    // Calculamos el costo/valor total invertido en ese movimiento
+    const valorTotal = parseFloat(monto) * parseFloat(precio);
 
-  // Llamamos a la función (la lógica nueva en global.js hará el resto)
-  actualizarInversiones(activo, valorTotal);
-  
-  Alert.alert("¡Éxito!", `Cartera actualizada: ${activo.toUpperCase()}`);
-  
-  setActivo('');
-  setMonto('');
-  setPrecio('');
-  router.replace('/'); 
-};
+    // CORRECCIÓN: Pasamos los 3 parámetros que requiere tu global.js
+    // 1. Activo (nombre), 2. Cantidad (monto), 3. Valor Total (costo)
+    actualizarInversiones(activo, monto, valorTotal);
+    
+    Alert.alert("¡Éxito!", `Cartera actualizada: ${activo.toUpperCase()}`);
+    
+    setActivo('');
+    setMonto('');
+    setPrecio('');
+
+    // SOLUCIÓN NAvegación: Te redirige directo a portfolio.tsx en lugar del index raíz
+    router.replace('/portfolio'); 
+  };
 
   return (
     <View style={styles.container}>
