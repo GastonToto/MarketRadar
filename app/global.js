@@ -1,13 +1,10 @@
 // global.js
-export var misInversiones = [
-  { id: '1', nombre: 'BTC', cantidad: 0.015, valor: 850.00, costo: 800.00 },
-  { id: '2', nombre: 'ETH', cantidad: 0.5, valor: 650.50, costo: 700.00 }
-];
+export var misInversiones = []; // Array vacío para que no haya inversiones por defecto
 
 /**
  * Agrega o acumula una inversión de forma manual
  */
-export const actualizarInversiones = (nombreIngresado, cantidadIngresada, valorTotal) => {
+export const actualizarInversiones = (nombreIngresado, cantidadIngresada, valorTotal, categoria) => {
   const nombreMayuscula = nombreIngresado.toUpperCase().trim();
   const nuevaCantidad = parseFloat(cantidadIngresada);
   const nuevoCosto = parseFloat(valorTotal);
@@ -20,13 +17,15 @@ export const actualizarInversiones = (nombreIngresado, cantidadIngresada, valorT
     misInversiones[indiceExistente].cantidad += nuevaCantidad;
     misInversiones[indiceExistente].costo += nuevoCosto;
     misInversiones[indiceExistente].valor = misInversiones[indiceExistente].costo;
+    // No sobrescribas la categoría si ya existe
   } else {
     misInversiones.push({
       id: Math.random().toString(),
       nombre: nombreMayuscula,
       cantidad: nuevaCantidad,
       costo: nuevoCosto,
-      valor: nuevoCosto, // Valor inicial = Costo inicial
+      valor: nuevoCosto,
+      categoria: categoria,
     });
   }
 };

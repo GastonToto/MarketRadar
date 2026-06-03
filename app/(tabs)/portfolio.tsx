@@ -1,18 +1,16 @@
 import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { actualizarPreciosEnTiempoReal, misInversiones } from '../global'; // Asegúrate de importar la función
 
 export default function HomeScreen() {
   const [datosActuales, setDatosActuales] = useState([...misInversiones]);
   const [cargandoPrecios, setCargandoPrecios] = useState(false);
-
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('todos');
   useFocusEffect(
     useCallback(() => {
-      // 1. Cargamos instantáneamente lo que haya en memoria para que no se vea vacío
       setDatosActuales([...misInversiones]);
-      
-      // 2. Traemos los precios frescos de la API en segundo plano
+
       const obtenerPreciosVivos = async () => {
         setCargandoPrecios(true);
         const datosNuevos = await actualizarPreciosEnTiempoReal();
@@ -25,48 +23,109 @@ export default function HomeScreen() {
   );
 
   const totalBalance = datosActuales.reduce((sum, inv) => sum + inv.valor, 0);
+  const totalCosto = datosActuales.reduce((sum, inv) => sum + inv.costo, 0);
+  const totalGananciaPct = totalCosto > 0 ? ((totalBalance - totalCosto) / totalCosto) * 100 : 0;
+
+  // Filtrar inversiones según la categoría seleccionada
+  const inversionesFiltradas = categoriaSeleccionada === 'todos'
+    ? datosActuales
+    : datosActuales.filter((inv) => inv.categoria === categoriaSeleccionada);
 
   return (
-    <ScrollView style={styles.container}> 
+    <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.subtitle}>BALANCE TOTAL</Text>
         <Text style={styles.balance}>${totalBalance.toFixed(2)}</Text>
-        
-        {/* Indicador visual por si la API tarda un cachito en responder */}
-        {cargandoPrecios ? (
-          <ActivityIndicator size="small" color="#10B981" style={{ marginBottom: 6 }} />
-        ) : (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>Precios en vivo</Text>
-          </View>
-        )}
+
+        <View style={styles.badge}>
+          <Text style={[styles.badgeText, { color: totalGananciaPct >= 0 ? '#10B981' : '#EF4444' }]}>
+            {totalGananciaPct >= 0 ? '+' : ''}{totalGananciaPct.toFixed(2)}%
+          </Text>
+        </View>
+      </View>
+
+      {/* Selector de categoría */}
+      <Text style={styles.filterLabel}>
+        Filtrar por categoría:
+      </Text>
+
+      <View style={styles.categorySelector}>
+        <TouchableOpacity
+          style={[
+            styles.categoryButton,
+            categoriaSeleccionada === 'todos' &&
+            styles.categoryButtonActive,
+          ]}
+          onPress={() => setCategoriaSeleccionada('todos')}
+        >
+          <Text
+            style={[
+              styles.categoryButtonText,
+              categoriaSeleccionada === 'todos' &&
+              styles.categoryButtonTextActive,
+            ]}
+          >
+            Todos
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.categoryButton,
+            categoriaSeleccionada === 'acciones' &&
+            styles.categoryButtonActive,
+          ]}
+          onPress={() => setCategoriaSeleccionada('acciones')}
+        >
+          <Text
+            style={[
+              styles.categoryButtonText,
+              categoriaSeleccionada === 'acciones' &&
+              styles.categoryButtonTextActive,
+            ]}
+          >
+            Acciones
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.categoryButton,
+            categoriaSeleccionada === 'criptos' &&
+            styles.categoryButtonActive,
+          ]}
+          onPress={() => setCategoriaSeleccionada('criptos')}
+        >
+          <Text
+            style={[
+              styles.categoryButtonText,
+              categoriaSeleccionada === 'criptos' &&
+              styles.categoryButtonTextActive,
+            ]}
+          >
+            Criptos
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Tus Inversiones</Text>
-        
-        {datosActuales.map((inv) => {
+
+        {inversionesFiltradas.map((inv) => {
           const gananciaUsd = inv.valor - inv.costo;
           const rendimientoPct = inv.costo > 0 ? (gananciaUsd / inv.costo) * 100 : 0;
           const esPositivo = gananciaUsd >= 0;
-
-          // CÁLCULO DEL PRECIO UNITARIO ACTUAL
           const precioUnitario = inv.cantidad > 0 ? inv.valor / inv.cantidad : 0;
 
           return (
             <View key={inv.id} style={styles.card}>
-              {/* Columna Izquierda */}
               <View style={{ flex: 1.5 }}>
                 <Text style={styles.cardName}>{inv.nombre}</Text>
                 <Text style={styles.cardQty}>{inv.cantidad.toFixed(4)} {inv.nombre}</Text>
-                
-                {/* NUEVO: Precio unitario actual de la crypto */}
-                <Text style={styles.cardUnitPrice}>
-                  Precio u.: ${precioUnitario.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <Text style={styles.cardValue}>
+                  ${precioUnitario.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Text>
               </View>
-
-              {/* Columna Derecha */}
               <View style={{ flex: 1, alignItems: 'flex-end' }}>
                 <Text style={styles.cardValue}>${inv.valor.toFixed(2)}</Text>
                 <Text style={[styles.rendimiento, { color: esPositivo ? '#10B981' : '#EF4444' }]}>
@@ -102,12 +161,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
-  card: { 
-    backgroundColor: '#1E293B', 
-    padding: 16, 
-    borderRadius: 16, 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
+  card: {
+    backgroundColor: '#1E293B',
+    padding: 16,
+    borderRadius: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
     borderWidth: 1,
@@ -119,4 +178,43 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontStyle: 'italic',
   },
+  categorySelector: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    gap: 10,
+  },
+
+  categoryButton: {
+    flex: 1,
+    backgroundColor: '#1f2937',
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#374151',
+    alignItems: 'center',
+  },
+
+  categoryButtonActive: {
+    backgroundColor: '#00d094',
+    borderColor: '#00d094',
+  },
+
+  categoryButtonText: {
+    color: '#9ca3af',
+    fontWeight: '600',
+    fontSize: 13,
+  },
+
+  categoryButtonTextActive: {
+    color: '#090f1d',
+    fontWeight: 'bold',
+  },
+
+  filterLabel: {
+    color: '#F8FAFC',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 10,
+    paddingHorizontal: 20,
+  },  
 });
