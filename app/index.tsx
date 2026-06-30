@@ -1,7 +1,7 @@
 import { Stack, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-// AGREGADO: Importamos AsyncStorage por si necesitas limpiar datos de sesión aquí en el futuro
+// Importamos AsyncStorage para recordar el estado de la sesión
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Login() {
@@ -9,17 +9,36 @@ export default function Login() {
   
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
-  // Nuevo estado para el mensaje de error
   const [error, setError] = useState("");
 
-  const handleLogin = () => {
-    // Limpiamos el error previo al intentar de nuevo
+  // NUEVO: Al recargar la página, comprueba si el usuario ya inició sesión antes
+  useEffect(() => {
+    const verificarSesion = async () => {
+      try {
+        const sesionActiva = await AsyncStorage.getItem("@sesion_usuario");
+        if (sesionActiva === "Inversor") {
+          // Si ya estaba logueado, lo mandamos directo al portfolio sin pedir credenciales
+          router.replace("/(tabs)/portfolio");
+        }
+      } catch (e) {
+        console.error("Error al verificar la sesión", e);
+      }
+    };
+    verificarSesion();
+  }, []);
+
+  const handleLogin = async () => {
     setError("");
 
     if (usuario.trim() === "Inversor" && password === "1234") {
-      router.replace("/(tabs)/portfolio");
+      try {
+        // NUEVO: Guardamos en memoria que la sesión está activa antes de redirigir
+        await AsyncStorage.setItem("@sesion_usuario", "Inversor");
+        router.replace("/(tabs)/portfolio");
+      } catch (e) {
+        console.error("Error al guardar la sesión", e);
+      }
     } else {
-      // En lugar de Alert, guardamos el mensaje en el estado
       setError("Usuario o contraseña incorrectos");
     }
   };
@@ -39,7 +58,7 @@ export default function Login() {
           value={usuario}
           onChangeText={(text) => {
             setUsuario(text);
-            if (error) setError(""); // Limpia el error mientras escribes
+            if (error) setError("");
           }}
           autoCapitalize="none"
         />
@@ -51,11 +70,10 @@ export default function Login() {
           value={password}
           onChangeText={(text) => {
             setPassword(text);
-            if (error) setError(""); // Limpia el error mientras escribes
+            if (error) setError("");
           }}
         />
 
-        {/* Renderizado condicional del error */}
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <TouchableOpacity 
@@ -98,7 +116,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: "#fff",
   },
-  // Estilo para el mensaje de error
   errorText: {
     color: "#ff5252",
     fontSize: 14,
