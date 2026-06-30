@@ -1,6 +1,8 @@
 import { Stack, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+// AGREGADO: Importamos AsyncStorage por si necesitas limpiar datos de sesión aquí en el futuro
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Login() {
   const router = useRouter();

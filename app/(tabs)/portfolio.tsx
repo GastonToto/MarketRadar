@@ -109,6 +109,39 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Distribución por activo</Text>
+
+        {inversionesFiltradas.length === 0 ? (
+          <Text style={styles.emptyText}>Agrega inversiones para ver el gráfico.</Text>
+        ) : (
+          <View style={styles.chartContainer}>
+            {inversionesFiltradas.map((inv) => {
+              const porcentaje = totalBalance > 0 ? (inv.valor / totalBalance) * 100 : 0;
+              const chartColor = inv.categoria === 'criptos' ? '#7C3AED' : '#22C55E';
+
+              return (
+                <View key={`chart-${inv.id}`} style={styles.chartRow}>
+                  <View style={styles.chartLabelRow}>
+                    <Text style={styles.chartLabel}>{inv.nombre}</Text>
+                    <Text style={styles.chartLabelValue}>${inv.valor.toFixed(2)}</Text>
+                  </View>
+                  <View style={styles.chartBarBackground}>
+                    <View
+                      style={[
+                        styles.chartBar,
+                        { width: `${Math.max(porcentaje, 3)}%`, backgroundColor: chartColor },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.chartPercentage}>{porcentaje.toFixed(1)}%</Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
+      </View>
+
+      <View style={styles.section}>
         <Text style={styles.sectionTitle}>Tus Inversiones</Text>
 
         {inversionesFiltradas.map((inv) => {
@@ -208,6 +241,57 @@ const styles = StyleSheet.create({
   categoryButtonTextActive: {
     color: '#090f1d',
     fontWeight: 'bold',
+  },
+
+  chartContainer: {
+    gap: 12,
+    marginBottom: 24,
+  },
+
+  chartRow: {
+    gap: 8,
+  },
+
+  chartLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+
+  chartLabel: {
+    color: '#F8FAFC',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
+  chartLabelValue: {
+    color: '#94A3B8',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
+  chartBarBackground: {
+    backgroundColor: '#111827',
+    height: 14,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+
+  chartBar: {
+    height: '100%',
+    borderRadius: 999,
+  },
+
+  chartPercentage: {
+    color: '#939BA7',
+    fontSize: 12,
+    marginTop: 6,
+  },
+
+  emptyText: {
+    color: '#94A3B8',
+    fontSize: 14,
+    marginBottom: 14,
   },
 
   filterLabel: {
